@@ -32,11 +32,21 @@ Add a gateway API key to `.env.local`:
 PATCH_LENS_GATEWAY_API_KEY=...
 ```
 
+Optional access gate for shared previews:
+
+```bash
+DEMO_USERNAME=demo
+DEMO_PASSWORD=
+```
+
 Optional model override:
 
 ```bash
 PATCH_LENS_MODEL_ID=google/gemini-2.5-flash-lite
 ```
+
+Leave `DEMO_PASSWORD` blank for normal local development. Set it to enable an
+HTTP Basic Auth prompt for the whole app, including `/api/review`.
 
 ## Commands
 
@@ -48,6 +58,34 @@ pnpm typecheck
 pnpm eval
 pnpm check
 ```
+
+## Hosted Deployment Setup
+
+For a shared Vercel preview on the free Hobby plan, use app-level
+HTTP Basic Auth instead of Vercel Password Protection. Vercel's native password
+screen is not available on Hobby, so this repo ships its own lightweight gate
+through `proxy.ts`.
+
+Set these Preview environment variables in Vercel:
+
+- `PATCH_LENS_GATEWAY_API_KEY`
+- `PATCH_LENS_MODEL_ID` if you want to override the default model
+- `DEMO_USERNAME=demo`
+- `DEMO_PASSWORD=<short random password>`
+
+Recommended flow:
+
+1. Import the repo into Vercel or link it with `vercel link --yes --project <name-or-id> --scope <team>`.
+2. Add the Preview environment variables above.
+3. Create a preview deployment with `vercel`.
+4. Open the generated preview URL and confirm the browser shows a username/password prompt.
+5. Share that preview URL plus the `DEMO_USERNAME` and `DEMO_PASSWORD` with the intended reviewer.
+
+Behavior notes:
+
+- Leaving `DEMO_PASSWORD` blank disables the gate locally and on any deployment.
+- When `DEMO_PASSWORD` is set, the app and `/api/review` both require the same Basic Auth credentials.
+- This setup is intended for protected preview sharing. Production can remain ungated unless you explicitly set the same vars there.
 
 ## Architecture
 
