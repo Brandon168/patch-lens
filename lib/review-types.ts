@@ -41,11 +41,19 @@ export const reviewVerdictSchema = z.object({
   executiveSummary: z.string().min(1).max(280),
 });
 
+export const fallbackReasonSchema = z.enum([
+  'simulate',
+  'no-model-access',
+  'agent-error',
+]);
+
 export const reviewMessageMetadataSchema = z.object({
   reviewPath: z.enum(['agent', 'fallback']),
+  durationMs: z.number().int().nonnegative(),
   modelId: z.string().optional(),
   completedAt: z.string().optional(),
   totalTokens: z.number().int().nonnegative().optional(),
+  fallbackReason: fallbackReasonSchema.optional(),
   verdict: reviewVerdictSchema.optional(),
 });
 
@@ -62,6 +70,7 @@ export type ChangeType = z.infer<typeof changeTypeSchema>;
 export type SupportedService = z.infer<typeof supportedServiceSchema>;
 export type ReviewDraft = z.infer<typeof reviewDraftSchema>;
 export type ReviewVerdict = z.infer<typeof reviewVerdictSchema>;
+export type FallbackReason = z.infer<typeof fallbackReasonSchema>;
 export type ReviewMessageMetadata = z.infer<typeof reviewMessageMetadataSchema>;
 export type ReviewScenario = z.infer<typeof reviewScenarioSchema>;
 

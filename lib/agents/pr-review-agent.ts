@@ -71,6 +71,7 @@ export const prReviewAgent = new ToolLoopAgent<
       step.toolCalls.some(call => call.toolName === 'lookupServiceProfile'),
     );
 
+    // Force the checklist first so every run starts with the same explainable review frame.
     if (stepNumber === 0) {
       return {
         activeTools: ['getReviewChecklist'],

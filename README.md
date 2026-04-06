@@ -1,14 +1,27 @@
 # Patch Lens
 
-Patch Lens is a compact review sandbox for running one patch through an
-AI-assisted review loop. The app stays intentionally small:
+Patch Lens is an AI-assisted single-patch risk triage app for engineering
+teams reviewing risky backend and infrastructure changes.
 
-- one page
-- one review route
-- one `ToolLoopAgent`
-- two tools
-- one typed verdict schema
-- one deterministic fallback path
+## Why It Exists
+
+Patch review is often inconsistent, slow, and weakest exactly where teams need
+discipline most: rollback planning, rollout safety, and operational risk. Patch
+Lens keeps the scope to one diff at a time so the reviewer can surface a clear,
+explainable decision instead of generating broad repository advice.
+
+Success for this MVP looks like:
+
+- surfacing high-risk changes quickly
+- calling out missing safeguards and rollback gaps
+- returning a verdict a human reviewer can verify from the patch alone
+
+## Who It's For
+
+Patch Lens is for engineering teams that need a fast first-pass review on
+backend, infrastructure, and operationally sensitive application changes. The
+output is meant to help an IC reviewer triage a change quickly and give an
+engineering lead a more consistent risk signal before deployment.
 
 ## What It Does
 
@@ -17,6 +30,30 @@ AI-assisted review loop. The app stays intentionally small:
 - Shows tool activity directly from typed `tool-*` message parts
 - Stores the final verdict in message metadata so the UI can render a stable card
 - Falls back to deterministic scoring when model access is unavailable
+
+## Why Patches First
+
+A single patch is the smallest useful unit for high-signal AI review. Keeping
+the scope to one patch narrows the trust boundary, keeps latency and cost
+predictable, and makes the verdict easy for a human reviewer to verify. For
+this MVP, Patch Lens prioritizes reliable triage and explainability over
+full-repository context.
+
+## MVP Shape
+
+- one page
+- one review route
+- one `ToolLoopAgent`
+- two tools
+- one typed verdict schema
+- one deterministic fallback path
+- forced first tool call so every run starts from the same review checklist
+
+## With More Time
+
+- enrich patch reviews with repository context, ownership, and related tests
+- persist review runs and add richer observability traces
+- support policy packs or team-specific review rules
 
 ## Setup
 

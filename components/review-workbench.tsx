@@ -84,6 +84,31 @@ function formatDate(value: string | undefined) {
   }).format(new Date(value));
 }
 
+function formatDuration(value: number) {
+  if (value <= 0) {
+    return 'In progress';
+  }
+
+  if (value < 1_000) {
+    return `${value} ms`;
+  }
+
+  return `${(value / 1_000).toFixed(1)} s`;
+}
+
+function formatFallbackReason(value: ReviewMessageMetadata['fallbackReason']) {
+  switch (value) {
+    case 'simulate':
+      return 'simulated fallback';
+    case 'no-model-access':
+      return 'no model access';
+    case 'agent-error':
+      return 'agent fallback';
+    default:
+      return undefined;
+  }
+}
+
 function ToolTrace({ message }: { message: ReviewUIMessage }) {
   const toolParts = message.parts.filter(isToolPart);
 
@@ -406,10 +431,14 @@ export function ReviewWorkbench() {
                     </p>
                   </article>
                   <article className="summary-card">
-                    <strong>Run Path</strong>
+                    <strong>Run Details</strong>
                     <p className="mono">
                       {metadata?.reviewPath ?? 'agent'}
                       {metadata?.modelId ? ` · ${metadata.modelId}` : ''}
+                      {metadata ? ` · ${formatDuration(metadata.durationMs)}` : ''}
+                      {metadata?.fallbackReason
+                        ? ` · fallback: ${formatFallbackReason(metadata.fallbackReason)}`
+                        : ''}
                     </p>
                   </article>
                 </div>

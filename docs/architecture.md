@@ -33,6 +33,12 @@ flowchart LR
 - The server owns prompt construction, tool execution, model access, and fallback selection.
 - The client only sends the current draft and renders the typed message stream.
 
+## Why Patch Scope
+
+- A single patch is the smallest review unit that still produces a concrete go/no-go decision.
+- Patch scope keeps the trust boundary narrow and the latency, cost, and explanation burden predictable.
+- The MVP optimizes for explainable risk triage, not full-repository retrieval or autonomous code review.
+
 ## Streaming Boundary
 
 - The route streams one assistant message.
@@ -46,6 +52,7 @@ This flow is synchronous and user-initiated. The target path is a single review 
 If this later needs background execution, the next step is to move the same draft schema and verdict schema behind a durable job runner with:
 
 - persisted run state
+- richer observability around run duration, fallback reason, and traced failures
 - retryable tool and model steps
 - resumable status polling
 - webhook or queue-based intake

@@ -18,6 +18,7 @@ import { normalizeReviewDraft } from '@/lib/review-draft';
 import { type ReviewUIMessage } from '@/lib/review-message';
 import { getReviewScenario } from '@/lib/review-scenarios';
 import {
+  type FallbackReason,
   parseReviewVerdictText,
   type ReviewMessageMetadata,
   type ReviewVerdict,
@@ -54,11 +55,14 @@ function chunkText(text: string, chunkSize = 48): string[] {
 
 function createFallbackResponse(options: {
   draft: ReviewAgentOptions['draft'];
+  fallbackReason: FallbackReason;
   originalMessages: ReviewUIMessage[];
+  startedAt: number;
 }) {
   const verdict = evaluateFallbackReview(options.draft);
   const narrative = buildFallbackNarrative(verdict);
 
+  // Keep the fallback verdict contract aligned with the agent path so the UI does not branch on shape.
   return createUIMessageStreamResponse({
     stream: createUIMessageStream<ReviewUIMessage>({
       originalMessages: options.originalMessages,
@@ -69,6 +73,9 @@ function createFallbackResponse(options: {
           type: 'start',
           messageMetadata: {
             reviewPath: 'fallback',
+            durationMs: 0,
+            // Expose the fallback cause in stream metadata without adding persistence or tracing infrastructure.
+            fallbackReason: options.fallbackReason,
           } satisfies ReviewMessageMetadata,
         });
         writer.write({ type: 'start-step' });
@@ -89,7 +96,9 @@ function createFallbackResponse(options: {
           finishReason: 'stop',
           messageMetadata: {
             reviewPath: 'fallback',
+            durationMs: Date.now() - options.startedAt,
             completedAt: new Date().toISOString(),
+            fallbackReason: options.fallbackReason,
             verdict,
           } satisfies ReviewMessageMetadata,
         });
@@ -129,9 +138,15 @@ export async function POST(request: Request) {
   }
 
   const originalMessages = parsed.data.messages as ReviewUIMessage[];
+  const startedAt = Date.now();
 
   if (draft.simulateFallback || !hasReviewModelAccess()) {
-    return createFallbackResponse({ draft, originalMessages });
+    return createFallbackResponse({
+      draft,
+      fallbackReason: draft.simulateFallback ? 'simulate' : 'no-model-access',
+      originalMessages,
+      startedAt,
+    });
   }
 
   let totalTokens = 0;
@@ -158,17 +173,21 @@ export async function POST(request: Request) {
         if (part.type === 'start') {
           return {
             reviewPath: 'agent',
+            durationMs: 0,
             modelId: reviewModelId,
           } satisfies ReviewMessageMetadata;
         }
 
         if (part.type === 'finish') {
           const verdict = finalVerdict ?? fallbackVerdict;
+          const fellBack = !finalVerdict;
 
           return {
-            reviewPath: finalVerdict ? 'agent' : 'fallback',
+            reviewPath: fellBack ? 'fallback' : 'agent',
+            durationMs: Date.now() - startedAt,
             modelId: reviewModelId,
             completedAt: new Date().toISOString(),
+            fallbackReason: fellBack ? 'agent-error' : undefined,
             totalTokens: totalTokens || undefined,
             verdict,
           } satisfies ReviewMessageMetadata;
@@ -183,6 +202,11 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('review route failed, falling back', error);
-    return createFallbackResponse({ draft, originalMessages });
+    return createFallbackResponse({
+      draft,
+      fallbackReason: 'agent-error',
+      originalMessages,
+      startedAt,
+    });
   }
 }
