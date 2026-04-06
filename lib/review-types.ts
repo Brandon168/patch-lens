@@ -27,7 +27,6 @@ export const reviewDraftSchema = z.object({
   title: z.string().min(3),
   summary: z.string().default(''),
   diff: z.string().min(1),
-  scenarioId: z.string().optional(),
   simulateFallback: z.boolean().default(false),
 });
 
@@ -57,13 +56,6 @@ export const reviewMessageMetadataSchema = z.object({
   verdict: reviewVerdictSchema.optional(),
 });
 
-export const reviewScenarioSchema = reviewDraftSchema.extend({
-  id: z.string().min(1),
-  label: z.string().min(1),
-  expectedRiskLevel: riskLevelSchema,
-  expectedAction: recommendedActionSchema,
-});
-
 export type RiskLevel = z.infer<typeof riskLevelSchema>;
 export type RecommendedAction = z.infer<typeof recommendedActionSchema>;
 export type ChangeType = z.infer<typeof changeTypeSchema>;
@@ -72,4 +64,3 @@ export type ReviewDraft = z.infer<typeof reviewDraftSchema>;
 export type ReviewVerdict = z.infer<typeof reviewVerdictSchema>;
 export type FallbackReason = z.infer<typeof fallbackReasonSchema>;
 export type ReviewMessageMetadata = z.infer<typeof reviewMessageMetadataSchema>;
-export type ReviewScenario = z.infer<typeof reviewScenarioSchema>;

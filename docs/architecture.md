@@ -22,6 +22,7 @@ flowchart LR
 - `lib/tools/review-tools.ts`: checklist and service-profile tools
 - `lib/fallback-review.ts`: deterministic fallback verdict generation
 - `scripts/eval.ts`: deterministic regression checks and live smoke validation
+- `scripts/fixtures/review-fixtures.ts`: canned eval inputs with expected outcomes for regression checks
 
 ## Why This Shape
 

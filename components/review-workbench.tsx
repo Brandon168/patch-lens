@@ -5,19 +5,22 @@ import { DefaultChatTransport } from 'ai';
 import { startTransition, useDeferredValue, useState } from 'react';
 import { type ReviewUIMessage } from '@/lib/review-message';
 import {
-  demoReviewScenarios,
-  getReviewScenario,
-} from '@/lib/review-scenarios';
-import {
   reviewMessageMetadataSchema,
   type ReviewMessageMetadata,
 } from '@/lib/review-types';
+
+type DemoScenario = {
+  id: string;
+  label: string;
+  title: string;
+  summary: string;
+  diff: string;
+};
 
 type DraftState = {
   title: string;
   summary: string;
   diff: string;
-  scenarioId?: string;
   simulateFallback: boolean;
 };
 
@@ -25,9 +28,77 @@ const emptyDraft: DraftState = {
   title: '',
   summary: '',
   diff: '',
-  scenarioId: undefined,
   simulateFallback: false,
 };
+
+// These presets exist only to speed up the demo. The server still reviews whatever
+// title, summary, and diff the form submits.
+export const demoScenarios: DemoScenario[] = [
+  {
+    id: 'auth-token-refresh',
+    label: 'Auth Refresh Window',
+    title: 'Extend refresh token lifetime in auth-api',
+    summary:
+      'Reduces re-auth prompts by extending refresh lifetime and shrinking the grace window.',
+    diff: `diff --git a/services/auth-api/src/token/refresh.ts b/services/auth-api/src/token/refresh.ts
+index 7a24f2d..d12f64a 100644
+--- a/services/auth-api/src/token/refresh.ts
++++ b/services/auth-api/src/token/refresh.ts
+@@ -3,12 +3,12 @@ import { issueTokenPair } from './issue-token-pair';
+ 
+-const REFRESH_TOKEN_TTL_MINUTES = 30;
++const REFRESH_TOKEN_TTL_MINUTES = 120;
+ 
+ export async function rotateRefreshToken(session: Session) {
+-  const gracePeriodSeconds = 60;
++  const gracePeriodSeconds = 5;
+ 
+   return issueTokenPair({
+     sessionId: session.id,
+     ttlMinutes: REFRESH_TOKEN_TTL_MINUTES,
+     gracePeriodSeconds,
+   });
+ }`,
+  },
+  {
+    id: 'ingress-allowlist',
+    label: 'Open Ingress',
+    title: 'Temporarily widen inbound access for partner debugging',
+    summary:
+      'Expands the production allowlist while a partner IP range is still unknown.',
+    diff: `diff --git a/infra/network/ingress.tf b/infra/network/ingress.tf
+index 4c720b1..c22dd17 100644
+--- a/infra/network/ingress.tf
++++ b/infra/network/ingress.tf
+@@ -11,7 +11,7 @@ resource "aws_security_group_rule" "partner_ingress" {
+   from_port         = 443
+   to_port           = 443
+   protocol          = "tcp"
+-  cidr_blocks       = ["203.0.113.42/32"]
++  cidr_blocks       = ["0.0.0.0/0"]
+   security_group_id = aws_security_group.partner_gateway.id
+ }`,
+  },
+  {
+    id: 'mystery-performance-tweak',
+    label: 'Unclear Fast Path',
+    title: 'Swap in a faster order worker path',
+    summary:
+      'Claims a performance improvement without showing the new implementation or any safety checks.',
+    diff: `diff --git a/services/orders-api/src/worker/process-batch.ts b/services/orders-api/src/worker/process-batch.ts
+index 4bc3b0f..9e73051 100644
+--- a/services/orders-api/src/worker/process-batch.ts
++++ b/services/orders-api/src/worker/process-batch.ts
+@@ -18,7 +18,7 @@ export async function processBatch(batch: OrderBatch) {
+-  return processBatchStable(batch);
++  return processBatchFast(batch);
+ }`,
+  },
+];
+
+function getDemoScenario(id: string) {
+  return demoScenarios.find(scenario => scenario.id === id);
+}
 
 function isToolPart(
   part: ReviewUIMessage['parts'][number],
@@ -156,6 +227,7 @@ function ToolTrace({ message }: { message: ReviewUIMessage }) {
 
 export function ReviewWorkbench() {
   const [draft, setDraft] = useState<DraftState>(emptyDraft);
+  const [selectedScenarioId, setSelectedScenarioId] = useState<string>();
   const deferredDiff = useDeferredValue(draft.diff);
 
   const {
@@ -193,10 +265,14 @@ export function ReviewWorkbench() {
     .filter(line => line.startsWith('-') && !line.startsWith('---')).length;
 
   function updateDraft<K extends keyof DraftState>(key: K, value: DraftState[K]) {
+    // Once the user edits the draft, treat it as custom input instead of a pristine preset.
+    if (key !== 'simulateFallback') {
+      setSelectedScenarioId(undefined);
+    }
+
     setDraft(current => ({
       ...current,
       [key]: value,
-      scenarioId: key === 'simulateFallback' ? current.scenarioId : undefined,
     }));
 
     if (error) {
@@ -205,20 +281,21 @@ export function ReviewWorkbench() {
   }
 
   function applyScenario(scenarioId: string) {
-    const scenario = getReviewScenario(scenarioId);
+    const scenario = getDemoScenario(scenarioId);
 
     if (!scenario) {
       return;
     }
 
     startTransition(() => {
+      // Replace the full draft so the preset behaves the same as if the user pasted these fields.
       setDraft({
         title: scenario.title,
         summary: scenario.summary,
         diff: scenario.diff,
-        scenarioId: scenario.id,
         simulateFallback: false,
       });
+      setSelectedScenarioId(scenario.id);
       setMessages([]);
       clearError();
     });
@@ -227,6 +304,7 @@ export function ReviewWorkbench() {
   function resetAll() {
     startTransition(() => {
       setDraft(emptyDraft);
+      setSelectedScenarioId(undefined);
       setMessages([]);
       clearError();
     });
@@ -294,10 +372,10 @@ export function ReviewWorkbench() {
             </div>
 
             <div className="scenario-grid">
-              {demoReviewScenarios.map(scenario => (
+              {demoScenarios.map(scenario => (
                 <button
                   className={`scenario-button${
-                    draft.scenarioId === scenario.id ? ' active' : ''
+                    selectedScenarioId === scenario.id ? ' active' : ''
                   }`}
                   key={scenario.id}
                   onClick={() => applyScenario(scenario.id)}

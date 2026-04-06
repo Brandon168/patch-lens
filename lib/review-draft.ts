@@ -4,7 +4,6 @@ import {
   supportedServiceSchema,
   type ChangeType,
   type ReviewDraft,
-  type ReviewScenario,
   type SupportedService,
 } from '@/lib/review-types';
 
@@ -16,20 +15,17 @@ function cleanBlock(value: string | undefined): string {
   return (value ?? '').replace(/\r\n/g, '\n').trim();
 }
 
-export function normalizeReviewDraft(
-  input: Partial<ReviewDraft>,
-  scenario?: ReviewScenario,
-): ReviewDraft {
+export function normalizeReviewDraft(input: Partial<ReviewDraft>): ReviewDraft {
   return reviewDraftSchema.parse({
-    title: cleanLine(input.title ?? scenario?.title),
-    summary: cleanBlock(input.summary ?? scenario?.summary),
-    diff: cleanBlock(input.diff ?? scenario?.diff),
-    scenarioId: input.scenarioId ?? scenario?.id,
+    title: cleanLine(input.title),
+    summary: cleanBlock(input.summary),
+    diff: cleanBlock(input.diff),
     simulateFallback: Boolean(input.simulateFallback),
   });
 }
 
 export function inferChangeType(draft: ReviewDraft): ChangeType {
+  // Keep the hint deliberately cheap and explainable; this is only there to narrow the review rubric.
   const haystack = `${draft.title}\n${draft.summary}\n${draft.diff}`.toLowerCase();
 
   if (
@@ -70,6 +66,7 @@ export function inferChangeType(draft: ReviewDraft): ChangeType {
 export function extractSupportedServices(
   draft: Pick<ReviewDraft, 'title' | 'summary' | 'diff'>,
 ): SupportedService[] {
+  // Only return services the tools know how to enrich so tool availability stays explicit.
   const haystack = `${draft.title}\n${draft.summary}\n${draft.diff}`.toLowerCase();
   const services = new Set<SupportedService>();
 

@@ -12,7 +12,6 @@ import {
 import { hasReviewModelAccess, reviewModelId } from '@/lib/model';
 import { normalizeReviewDraft } from '@/lib/review-draft';
 import { type ReviewUIMessage } from '@/lib/review-message';
-import { getReviewScenario } from '@/lib/review-scenarios';
 import {
   type FallbackReason,
   type ReviewMessageMetadata,
@@ -29,7 +28,6 @@ const requestSchema = z.object({
       title: z.string().optional(),
       summary: z.string().optional(),
       diff: z.string().optional(),
-      scenarioId: z.string().optional(),
       simulateFallback: z.boolean().optional(),
     })
     .default({}),
@@ -118,17 +116,10 @@ export async function POST(request: Request) {
     return toErrorResponse('Invalid review request.');
   }
 
-  const scenarioId = parsed.data.draft.scenarioId;
-  const scenario = scenarioId ? getReviewScenario(scenarioId) : undefined;
-
-  if (scenarioId && !scenario) {
-    return toErrorResponse('Unknown scenario.');
-  }
-
   let draft: ReviewAgentOptions['draft'];
 
   try {
-    draft = normalizeReviewDraft(parsed.data.draft, scenario);
+    draft = normalizeReviewDraft(parsed.data.draft);
   } catch {
     return toErrorResponse('A title and diff are required.');
   }
@@ -145,6 +136,7 @@ export async function POST(request: Request) {
     });
   }
 
+  // Compute a conservative fallback upfront so a bad model finish can still return a typed verdict.
   const fallbackVerdict = evaluateFallbackReview(draft);
 
   try {
@@ -214,6 +206,7 @@ export async function POST(request: Request) {
             finishReason = await result.finishReason;
           } catch (error) {
             console.error('review finish reason unavailable', error);
+            // If the stream cannot report a finish reason, treat the run as an agent failure in metadata.
             reviewPath = 'fallback';
             fallbackReason = 'agent-error';
             finishReason = 'error';

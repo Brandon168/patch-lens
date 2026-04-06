@@ -131,6 +131,7 @@ Behavior notes:
 - `lib/agents/pr-review-agent.ts` defines the reusable reviewer with loop control and structured output.
 - `lib/tools/review-tools.ts` contains the tiny checklist and service-profile tools.
 - `lib/fallback-review.ts` provides the stable deterministic safety net used by the fixture suite.
+- `scripts/fixtures/review-fixtures.ts` contains the canned eval inputs and expected outcomes used by `pnpm eval`.
 - `docs/architecture.md` captures the request flow and the main design choices.
 
 ## Design Choices

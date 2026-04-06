@@ -1,23 +1,23 @@
 import { prReviewAgent } from '../lib/agents/pr-review-agent';
 import { evaluateFallbackReview } from '../lib/fallback-review';
 import { hasReviewModelAccess } from '../lib/model';
-import { reviewScenarios } from '../lib/review-scenarios';
+import { reviewFixtures } from './fixtures/review-fixtures';
 
 async function runDeterministicChecks() {
   const failures: string[] = [];
 
-  for (const scenario of reviewScenarios) {
-    const verdict = evaluateFallbackReview(scenario);
+  for (const fixture of reviewFixtures) {
+    const verdict = evaluateFallbackReview(fixture);
 
-    if (verdict.riskLevel !== scenario.expectedRiskLevel) {
+    if (verdict.riskLevel !== fixture.expectedRiskLevel) {
       failures.push(
-        `${scenario.id}: expected risk ${scenario.expectedRiskLevel}, got ${verdict.riskLevel}`,
+        `${fixture.id}: expected risk ${fixture.expectedRiskLevel}, got ${verdict.riskLevel}`,
       );
     }
 
-    if (verdict.recommendedAction !== scenario.expectedAction) {
+    if (verdict.recommendedAction !== fixture.expectedAction) {
       failures.push(
-        `${scenario.id}: expected action ${scenario.expectedAction}, got ${verdict.recommendedAction}`,
+        `${fixture.id}: expected action ${fixture.expectedAction}, got ${verdict.recommendedAction}`,
       );
     }
   }
@@ -30,7 +30,7 @@ async function runDeterministicChecks() {
     process.exit(1);
   }
 
-  console.log(`Deterministic eval passed for ${reviewScenarios.length} fixtures.`);
+  console.log(`Deterministic eval passed for ${reviewFixtures.length} fixtures.`);
 }
 
 async function runLiveSmoke() {
@@ -39,14 +39,14 @@ async function runLiveSmoke() {
     return;
   }
 
-  const smokeScenarios = reviewScenarios.filter(scenario =>
-    ['auth-token-refresh', 'drop-orders-column'].includes(scenario.id),
+  const smokeFixtures = reviewFixtures.filter(fixture =>
+    ['auth-token-refresh', 'drop-orders-column'].includes(fixture.id),
   );
 
-  for (const scenario of smokeScenarios) {
+  for (const fixture of smokeFixtures) {
     const result = await prReviewAgent.generate({
       prompt: 'Review this patch.',
-      options: { draft: scenario },
+      options: { draft: fixture },
     });
     const output = await result.output;
     const steps = await result.steps;
@@ -55,18 +55,18 @@ async function runLiveSmoke() {
     );
 
     if (!toolNames.includes('getReviewChecklist')) {
-      throw new Error(`${scenario.id}: missing required checklist tool call`);
+      throw new Error(`${fixture.id}: missing required checklist tool call`);
     }
 
     if (
-      scenario.id === 'auth-token-refresh' &&
+      fixture.id === 'auth-token-refresh' &&
       !toolNames.includes('lookupServiceProfile')
     ) {
-      throw new Error(`${scenario.id}: missing service profile tool call`);
+      throw new Error(`${fixture.id}: missing service profile tool call`);
     }
 
     console.log(
-      `Live smoke passed for ${scenario.id}: ${output.riskLevel} / ${output.recommendedAction}`,
+      `Live smoke passed for ${fixture.id}: ${output.riskLevel} / ${output.recommendedAction}`,
     );
   }
 }

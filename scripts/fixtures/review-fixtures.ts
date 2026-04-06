@@ -1,10 +1,23 @@
+import { z } from 'zod';
 import {
-  reviewScenarioSchema,
-  type ReviewScenario,
+  recommendedActionSchema,
+  reviewDraftSchema,
+  riskLevelSchema,
 } from '@/lib/review-types';
 
-export const reviewScenarios: ReviewScenario[] = [
-  reviewScenarioSchema.parse({
+const reviewFixtureSchema = reviewDraftSchema.extend({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  expectedRiskLevel: riskLevelSchema,
+  expectedAction: recommendedActionSchema,
+});
+
+export type ReviewFixture = z.infer<typeof reviewFixtureSchema>;
+
+// Eval fixtures live here so the scripted checks can assert expected fallback and
+// agent behavior without depending on the UI presets.
+export const reviewFixtures: ReviewFixture[] = [
+  reviewFixtureSchema.parse({
     id: 'banner-copy-flag',
     label: 'Flagged Banner Copy',
     title: 'Tighten checkout banner copy behind the existing flag',
@@ -32,7 +45,7 @@ index 9b3d1d1..f3b1220 100644
     expectedAction: 'approve',
     simulateFallback: false,
   }),
-  reviewScenarioSchema.parse({
+  reviewFixtureSchema.parse({
     id: 'auth-token-refresh',
     label: 'Auth Refresh Window',
     title: 'Extend refresh token lifetime in auth-api',
@@ -61,7 +74,7 @@ index 7a24f2d..d12f64a 100644
     expectedAction: 'review',
     simulateFallback: false,
   }),
-  reviewScenarioSchema.parse({
+  reviewFixtureSchema.parse({
     id: 'payments-timeout-config',
     label: 'Payments Timeout',
     title: 'Raise upstream timeout and breaker threshold in payments-api',
@@ -87,7 +100,7 @@ index 4fd8c0a..69dd7af 100644
     expectedAction: 'review',
     simulateFallback: false,
   }),
-  reviewScenarioSchema.parse({
+  reviewFixtureSchema.parse({
     id: 'drop-orders-column',
     label: 'Drop Orders Column',
     title: 'Remove legacy fulfillment column from orders',
@@ -109,7 +122,7 @@ index 0000000..4ab9d2f
     expectedAction: 'block',
     simulateFallback: false,
   }),
-  reviewScenarioSchema.parse({
+  reviewFixtureSchema.parse({
     id: 'ingress-allowlist',
     label: 'Open Ingress',
     title: 'Temporarily widen inbound access for partner debugging',
@@ -131,7 +144,7 @@ index 4c720b1..c22dd17 100644
     expectedAction: 'block',
     simulateFallback: false,
   }),
-  reviewScenarioSchema.parse({
+  reviewFixtureSchema.parse({
     id: 'mystery-performance-tweak',
     label: 'Unclear Fast Path',
     title: 'Swap in a faster order worker path',
@@ -150,17 +163,3 @@ index 4bc3b0f..9e73051 100644
     simulateFallback: false,
   }),
 ];
-
-export const demoScenarioIds = [
-  'auth-token-refresh',
-  'ingress-allowlist',
-  'mystery-performance-tweak',
-] as const;
-
-export const demoReviewScenarios = reviewScenarios.filter(scenario =>
-  demoScenarioIds.includes(scenario.id as (typeof demoScenarioIds)[number]),
-);
-
-export function getReviewScenario(id: string): ReviewScenario | undefined {
-  return reviewScenarios.find(scenario => scenario.id === id);
-}
