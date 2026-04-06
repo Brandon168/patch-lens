@@ -161,6 +161,8 @@ export async function POST(request: Request) {
           return 'Review run failed before a complete verdict was produced.';
         },
         execute: async ({ writer }) => {
+          // Let tool calls and assistant text stream immediately, then attach the authoritative
+          // verdict only after the structured output has been validated.
           writer.merge(
             result.toUIMessageStream<ReviewUIMessage>({
               originalMessages,

@@ -55,6 +55,7 @@ export const prReviewAgent = new ToolLoopAgent<
     const changeType = inferChangeType(draft);
     const serviceNames = extractSupportedServices(draft);
 
+    // Derive review context once so prompt construction and tool policy stay aligned across steps.
     return {
       ...callArgs,
       model: reviewLanguageModel,
@@ -72,7 +73,7 @@ export const prReviewAgent = new ToolLoopAgent<
       step.toolCalls.some(call => call.toolName === 'lookupServiceProfile'),
     );
 
-    // Force the checklist first so every run starts with the same explainable review frame.
+    // Force the checklist first so every run starts from the same bounded review rubric.
     if (stepNumber === 0) {
       return {
         activeTools: ['getReviewChecklist'],
@@ -81,6 +82,8 @@ export const prReviewAgent = new ToolLoopAgent<
       };
     }
 
+    // The second tool is only useful when the diff names a supported service and we have not
+    // already enriched the run with that service profile.
     if (context.serviceNames.length > 0 && !serviceProfileWasCalled) {
       return {
         activeTools: ['lookupServiceProfile'],

@@ -179,6 +179,8 @@ export function ReviewWorkbench() {
     | ReviewMessageMetadata
     | undefined;
   const verdict = metadata?.verdict;
+  // The stream may include raw structured output text, but the parsed verdict metadata is the
+  // stable contract the rest of the UI should render when it is available.
   const hideStructuredAssistantText =
     Boolean(verdict) && assistantText.trim().startsWith('{');
 

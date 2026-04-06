@@ -63,6 +63,8 @@ function mapRecommendedAction(riskLevel: RiskLevel): RecommendedAction {
 }
 
 export function evaluateFallbackReview(draft: ReviewDraft): ReviewVerdict {
+  // Keep the non-model path conservative and shape-compatible so the UI can render one verdict
+  // contract whether the review came from the agent or the deterministic fallback.
   const haystack = `${draft.title}\n${draft.summary}\n${draft.diff}`.toLowerCase();
   const changeType = inferChangeType(draft);
   const serviceNames = extractSupportedServices(draft);
