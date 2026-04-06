@@ -1,8 +1,4 @@
-import {
-  createAgentUIStreamResponse,
-  createUIMessageStream,
-  createUIMessageStreamResponse,
-} from 'ai';
+import { createUIMessageStream, createUIMessageStreamResponse } from 'ai';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import {
@@ -19,8 +15,8 @@ import { type ReviewUIMessage } from '@/lib/review-message';
 import { getReviewScenario } from '@/lib/review-scenarios';
 import {
   type FallbackReason,
-  parseReviewVerdictText,
   type ReviewMessageMetadata,
+  reviewVerdictSchema,
   type ReviewVerdict,
 } from '@/lib/review-types';
 
@@ -149,56 +145,93 @@ export async function POST(request: Request) {
     });
   }
 
-  let totalTokens = 0;
-  let finalVerdict: ReviewVerdict | undefined;
   const fallbackVerdict = evaluateFallbackReview(draft);
 
   try {
-    return await createAgentUIStreamResponse({
-      agent: prReviewAgent,
-      uiMessages: originalMessages,
-      originalMessages,
+    const result = await prReviewAgent.stream({
+      prompt: `Review patch: ${draft.title}`,
       options: { draft },
-      sendReasoning: false,
-      onStepFinish: step => {
-        totalTokens += step.usage.totalTokens ?? 0;
+    });
 
-        const verdict = parseReviewVerdictText(step.text);
+    return createUIMessageStreamResponse({
+      stream: createUIMessageStream<ReviewUIMessage>({
+        originalMessages,
+        onError: error => {
+          console.error('review stream error', error);
+          return 'Review run failed before a complete verdict was produced.';
+        },
+        execute: async ({ writer }) => {
+          writer.merge(
+            result.toUIMessageStream<ReviewUIMessage>({
+              originalMessages,
+              sendReasoning: false,
+              sendFinish: false,
+              messageMetadata: ({ part }) => {
+                if (part.type !== 'start') {
+                  return undefined;
+                }
 
-        if (verdict) {
-          finalVerdict = verdict;
-        }
-      },
-      messageMetadata: ({ part }) => {
-        if (part.type === 'start') {
-          return {
-            reviewPath: 'agent',
-            durationMs: 0,
-            modelId: reviewModelId,
-          } satisfies ReviewMessageMetadata;
-        }
+                return {
+                  reviewPath: 'agent',
+                  durationMs: 0,
+                  modelId: reviewModelId,
+                } satisfies ReviewMessageMetadata;
+              },
+              onError: error => {
+                console.error('review stream error', error);
+                return 'Review run failed before a complete verdict was produced.';
+              },
+            }),
+          );
 
-        if (part.type === 'finish') {
-          const verdict = finalVerdict ?? fallbackVerdict;
-          const fellBack = !finalVerdict;
+          let verdict: ReviewVerdict = fallbackVerdict;
+          let reviewPath: ReviewMessageMetadata['reviewPath'] = 'agent';
+          let fallbackReason: FallbackReason | undefined;
 
-          return {
-            reviewPath: fellBack ? 'fallback' : 'agent',
-            durationMs: Date.now() - startedAt,
-            modelId: reviewModelId,
-            completedAt: new Date().toISOString(),
-            fallbackReason: fellBack ? 'agent-error' : undefined,
-            totalTokens: totalTokens || undefined,
-            verdict,
-          } satisfies ReviewMessageMetadata;
-        }
+          try {
+            verdict = reviewVerdictSchema.parse(await result.output);
+          } catch (error) {
+            console.error('review output invalid, using fallback verdict', error);
+            reviewPath = 'fallback';
+            fallbackReason = 'agent-error';
+          }
 
-        return undefined;
-      },
-      onError: error => {
-        console.error('review stream error', error);
-        return 'Review run failed before a complete verdict was produced.';
-      },
+          let totalUsage:
+            | Awaited<typeof result.totalUsage>
+            | undefined;
+
+          try {
+            totalUsage = await result.totalUsage;
+          } catch (error) {
+            console.error('review usage unavailable', error);
+          }
+
+          let finishReason: 'stop' | 'length' | 'content-filter' | 'tool-calls' | 'error' | 'other';
+
+          try {
+            finishReason = await result.finishReason;
+          } catch (error) {
+            console.error('review finish reason unavailable', error);
+            reviewPath = 'fallback';
+            fallbackReason = 'agent-error';
+            finishReason = 'error';
+          }
+
+          writer.write({
+            type: 'finish',
+            finishReason,
+            messageMetadata: {
+              reviewPath,
+              durationMs: Date.now() - startedAt,
+              modelId: reviewModelId,
+              completedAt: new Date().toISOString(),
+              fallbackReason,
+              totalTokens: totalUsage?.totalTokens,
+              verdict,
+            } satisfies ReviewMessageMetadata,
+          });
+        },
+      }),
     });
   } catch (error) {
     console.error('review route failed, falling back', error);

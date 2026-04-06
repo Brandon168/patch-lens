@@ -79,7 +79,7 @@ DEMO_PASSWORD=
 Optional model override:
 
 ```bash
-PATCH_LENS_MODEL_ID=google/gemini-2.5-flash-lite
+PATCH_LENS_MODEL_ID=openai/gpt-5.4
 ```
 
 Leave `DEMO_PASSWORD` blank for normal local development. Set it to enable an

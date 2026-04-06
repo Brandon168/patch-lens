@@ -43,7 +43,7 @@ flowchart LR
 
 - The route streams one assistant message.
 - Tool activity arrives as typed `tool-*` parts.
-- The final verdict is attached as typed message metadata so the UI can render a stable card without custom stream parsing.
+- The final verdict comes from the agent's structured `output` and is attached as typed message metadata so the UI can render a stable card without custom stream parsing.
 
 ## Future Extension
 
@@ -68,4 +68,4 @@ If this later needs background execution, the next step is to move the same draf
 | Choose tool behavior | `ToolLoopAgent.prepareStep` | Force the checklist tool first, then optionally allow the service-profile lookup. |
 | Run tools | `getReviewChecklist`, `lookupServiceProfile` | Ground the model with explicit, typed tool outputs. |
 | Produce verdict | `Output.object(reviewVerdictSchema)` | Require a stable structured verdict contract instead of free-form prose. |
-| Parse and attach result | `parseReviewVerdictText`, route metadata | Store the final verdict in typed message metadata for UI rendering. |
+| Attach final result | `result.output`, route metadata | Store the structured verdict in typed message metadata for UI rendering. |

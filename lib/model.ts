@@ -1,7 +1,7 @@
 import { createGateway, type GatewayModelId } from 'ai';
 
 export const DEFAULT_REVIEW_MODEL_ID: GatewayModelId =
-  'google/gemini-2.5-flash-lite';
+  'openai/gpt-5.4';
 
 export const reviewModelId = (process.env.PATCH_LENS_MODEL_ID?.trim() ||
   DEFAULT_REVIEW_MODEL_ID) as GatewayModelId;

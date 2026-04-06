@@ -73,19 +73,3 @@ export type ReviewVerdict = z.infer<typeof reviewVerdictSchema>;
 export type FallbackReason = z.infer<typeof fallbackReasonSchema>;
 export type ReviewMessageMetadata = z.infer<typeof reviewMessageMetadataSchema>;
 export type ReviewScenario = z.infer<typeof reviewScenarioSchema>;
-
-export function parseReviewVerdictText(text: string): ReviewVerdict | undefined {
-  const trimmed = text.trim();
-
-  if (!trimmed) {
-    return undefined;
-  }
-
-  const parsed = z
-    .string()
-    .transform(value => JSON.parse(value))
-    .pipe(reviewVerdictSchema)
-    .safeParse(trimmed);
-
-  return parsed.success ? parsed.data : undefined;
-}

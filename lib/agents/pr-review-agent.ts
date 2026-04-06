@@ -50,12 +50,13 @@ export const prReviewAgent = new ToolLoopAgent<
   temperature: 0,
   stopWhen: stepCountIs(4),
   callOptionsSchema: reviewAgentOptionsSchema,
-  prepareCall: ({ options }) => {
+  prepareCall: ({ options, ...callArgs }) => {
     const draft = options.draft;
     const changeType = inferChangeType(draft);
     const serviceNames = extractSupportedServices(draft);
 
     return {
+      ...callArgs,
       model: reviewLanguageModel,
       prompt: buildReviewPrompt(draft, { changeType, serviceNames }),
       experimental_context: {
