@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.144",
+    "@vercel/analytics": "^2.0.1",
     "ai": "^6.0.142",
     "geist": "^1.7.0",
     "next": "16.2.2",
