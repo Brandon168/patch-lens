@@ -79,7 +79,7 @@ DEMO_PASSWORD=
 Optional model override:
 
 ```bash
-PATCH_LENS_MODEL_ID=openai/gpt-5.4
+PATCH_LENS_MODEL_ID=openai/gpt-5.4-mini
 ```
 
 Leave `DEMO_PASSWORD` blank for normal local development. Set it to enable an
