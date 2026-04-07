@@ -1,4 +1,4 @@
-import { ReviewWorkbench } from '@/components/review-workbench';
+import { ReviewWorkbench } from '@/features/review/ui/workbench';
 
 export default function Home() {
   return <ReviewWorkbench />;

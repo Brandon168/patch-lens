@@ -4,20 +4,20 @@ import { z } from 'zod';
 import {
   prReviewAgent,
   type ReviewAgentOptions,
-} from '@/lib/agents/pr-review-agent';
+} from '@/features/review/agent';
 import {
   buildFallbackNarrative,
   evaluateFallbackReview,
-} from '@/lib/fallback-review';
-import { hasReviewModelAccess, reviewModelId } from '@/lib/model';
-import { normalizeReviewDraft } from '@/lib/review-draft';
-import { type ReviewUIMessage } from '@/lib/review-message';
+} from '@/features/review/fallback';
+import { hasReviewModelAccess, reviewModelId } from '@/features/review/model';
+import { normalizeReviewDraft } from '@/features/review/draft';
+import { type ReviewUIMessage } from '@/features/review/message-contract';
 import {
   type FallbackReason,
   type ReviewMessageMetadata,
   reviewVerdictSchema,
   type ReviewVerdict,
-} from '@/lib/review-types';
+} from '@/features/review/schema';
 
 export const runtime = 'nodejs';
 

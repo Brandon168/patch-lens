@@ -31,6 +31,19 @@ engineering lead a more consistent risk signal before deployment.
 - Stores the final verdict in message metadata so the UI can render a stable card
 - Falls back to deterministic scoring when model access is unavailable
 
+## Start Here
+
+If you are scanning the repo for the main flow, read these files in order:
+
+1. `app/page.tsx`
+2. `features/review/ui/workbench.tsx`
+3. `app/api/review/route.ts`
+4. `features/review/agent.ts`
+5. `features/review/tools.ts`
+6. `features/review/schema.ts`
+7. `features/review/fallback.ts`
+8. `features/review/message-contract.ts`
+
 ## Why Patches First
 
 A single patch is the smallest useful unit for high-signal AI review. Keeping
@@ -126,11 +139,11 @@ Behavior notes:
 
 ## Architecture
 
-- `components/review-workbench.tsx` owns the one-shot form and renders the current run only.
+- `features/review/ui/workbench.tsx` owns the one-shot form and renders the current run only.
 - `app/api/review/route.ts` normalizes the draft, decides between agent and fallback, and attaches the typed verdict to message metadata.
-- `lib/agents/pr-review-agent.ts` defines the reusable reviewer with loop control and structured output.
-- `lib/tools/review-tools.ts` contains the tiny checklist and service-profile tools.
-- `lib/fallback-review.ts` provides the stable deterministic safety net used by the fixture suite.
+- `features/review/agent.ts` defines the reusable reviewer with loop control and structured output.
+- `features/review/tools.ts` contains the tiny checklist and service-profile tools.
+- `features/review/fallback.ts` provides the stable deterministic safety net used by the fixture suite.
 - `scripts/fixtures/review-fixtures.ts` contains the canned eval inputs and expected outcomes used by `pnpm eval`.
 - `docs/architecture.md` captures the request flow and the main design choices.
 

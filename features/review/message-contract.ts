@@ -1,6 +1,6 @@
 import { type InferAgentUIMessage } from 'ai';
-import { prReviewAgent } from '@/lib/agents/pr-review-agent';
-import { type ReviewMessageMetadata } from '@/lib/review-types';
+import { prReviewAgent } from '@/features/review/agent';
+import { type ReviewMessageMetadata } from '@/features/review/schema';
 
 export type ReviewUIMessage = InferAgentUIMessage<
   typeof prReviewAgent,

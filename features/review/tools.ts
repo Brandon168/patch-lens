@@ -5,7 +5,7 @@ import {
   supportedServiceSchema,
   type ChangeType,
   type SupportedService,
-} from '@/lib/review-types';
+} from '@/features/review/schema';
 
 const reviewChecklists: Record<
   ChangeType,

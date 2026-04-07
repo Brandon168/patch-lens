@@ -1,4 +1,8 @@
-import type { ChangeType, ReviewDraft, SupportedService } from '@/lib/review-types';
+import type {
+  ChangeType,
+  ReviewDraft,
+  SupportedService,
+} from '@/features/review/schema';
 
 export function buildReviewInstructions(): string {
   return [

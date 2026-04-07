@@ -4,11 +4,11 @@
 
 ```mermaid
 flowchart LR
-  A["app/page.tsx"] --> B["components/review-workbench.tsx"]
+  A["app/page.tsx"] --> B["features/review/ui/workbench.tsx"]
   B -->|sendMessage| C["POST /api/review"]
   C --> D{"Model access?"}
-  D -->|yes| E["prReviewAgent"]
-  D -->|no| F["fallback-review.ts"]
+  D -->|yes| E["features/review/agent.ts"]
+  D -->|no| F["features/review/fallback.ts"]
   E --> G["Typed verdict"]
   F --> G
   G --> H["Workbench renders verdict + tool trace"]
@@ -16,11 +16,12 @@ flowchart LR
 
 ## Key Files
 
-- `components/review-workbench.tsx`: client form state, streamed message rendering, and typed verdict display
+- `features/review/ui/workbench.tsx`: client form state, streamed message rendering, and typed verdict display
 - `app/api/review/route.ts`: request validation, agent vs fallback selection, and message metadata attachment
-- `lib/agents/pr-review-agent.ts`: bounded agent definition with prompt preparation and tool-step orchestration
-- `lib/tools/review-tools.ts`: checklist and service-profile tools
-- `lib/fallback-review.ts`: deterministic fallback verdict generation
+- `features/review/agent.ts`: bounded agent definition with prompt preparation and tool-step orchestration
+- `features/review/tools.ts`: checklist and service-profile tools
+- `features/review/fallback.ts`: deterministic fallback verdict generation
+- `features/review/message-contract.ts`: typed UI message contract shared by the agent stream and the workbench
 - `scripts/eval.ts`: deterministic regression checks and live smoke validation
 - `scripts/fixtures/review-fixtures.ts`: canned eval inputs with expected outcomes for regression checks
 

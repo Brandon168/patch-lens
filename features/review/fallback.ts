@@ -1,14 +1,14 @@
 import {
   extractSupportedServices,
   inferChangeType,
-} from '@/lib/review-draft';
+} from '@/features/review/draft';
 import {
   reviewVerdictSchema,
   type RecommendedAction,
   type ReviewDraft,
   type ReviewVerdict,
   type RiskLevel,
-} from '@/lib/review-types';
+} from '@/features/review/schema';
 
 function unique(items: string[]): string[] {
   return [...new Set(items)];

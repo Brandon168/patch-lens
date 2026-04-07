@@ -3,7 +3,7 @@ import {
   recommendedActionSchema,
   reviewDraftSchema,
   riskLevelSchema,
-} from '@/lib/review-types';
+} from '@/features/review/schema';
 
 const reviewFixtureSchema = reviewDraftSchema.extend({
   id: z.string().min(1),

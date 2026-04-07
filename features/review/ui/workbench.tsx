@@ -3,11 +3,11 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 import { startTransition, useDeferredValue, useState } from 'react';
-import { type ReviewUIMessage } from '@/lib/review-message';
+import { type ReviewUIMessage } from '@/features/review/message-contract';
 import {
   reviewMessageMetadataSchema,
   type ReviewMessageMetadata,
-} from '@/lib/review-types';
+} from '@/features/review/schema';
 
 type DemoScenario = {
   id: string;

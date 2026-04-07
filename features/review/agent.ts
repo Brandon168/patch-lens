@@ -3,20 +3,20 @@ import { z } from 'zod';
 import {
   extractSupportedServices,
   inferChangeType,
-} from '@/lib/review-draft';
-import { reviewLanguageModel } from '@/lib/model';
+} from '@/features/review/draft';
+import { reviewLanguageModel } from '@/features/review/model';
 import {
   buildReviewInstructions,
   buildReviewPrompt,
-} from '@/lib/review-prompt';
+} from '@/features/review/prompt';
 import {
   reviewDraftSchema,
   reviewVerdictSchema,
   type ChangeType,
   type ReviewDraft,
   type SupportedService,
-} from '@/lib/review-types';
-import { reviewTools } from '@/lib/tools/review-tools';
+} from '@/features/review/schema';
+import { reviewTools } from '@/features/review/tools';
 
 const reviewAgentOptionsSchema = z.object({
   draft: reviewDraftSchema,

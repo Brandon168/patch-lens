@@ -1,7 +1,10 @@
-import { prReviewAgent } from '../lib/agents/pr-review-agent';
-import { evaluateFallbackReview } from '../lib/fallback-review';
-import { hasReviewModelAccess } from '../lib/model';
+import { loadEnvConfig } from '@next/env';
+import { prReviewAgent } from '../features/review/agent';
+import { evaluateFallbackReview } from '../features/review/fallback';
+import { hasReviewModelAccess } from '../features/review/model';
 import { reviewFixtures } from './fixtures/review-fixtures';
+
+loadEnvConfig(process.cwd());
 
 async function runDeterministicChecks() {
   const failures: string[] = [];

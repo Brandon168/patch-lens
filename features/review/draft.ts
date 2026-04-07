@@ -5,7 +5,7 @@ import {
   type ChangeType,
   type ReviewDraft,
   type SupportedService,
-} from '@/lib/review-types';
+} from '@/features/review/schema';
 
 function cleanLine(value: string | undefined): string {
   return (value ?? '').replace(/\s+/g, ' ').trim();
